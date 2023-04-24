@@ -22,10 +22,27 @@ public interface TeachplanService {
 
     /**
      * 新增/修改/保存
-     * @param saveTeachplanDto
+     * @param saveTeachplanDto 保存内容
      */
     public void saveTeachplan(SaveTeachplanDto saveTeachplanDto);
 
+    /**
+     * 删除
+     * @param planId 计划id
+     */
+    public void deleteTeachplan(Long planId);
+
+    /**
+     * 课程计划下移
+     * @param planId 计划id
+     */
+    public void moveDownTechplan(Long planId);
+
+    /**
+     * 课程计划上移
+     * @param planId
+     */
+    public void moveUpTechplan(Long planId);
 
 
 }

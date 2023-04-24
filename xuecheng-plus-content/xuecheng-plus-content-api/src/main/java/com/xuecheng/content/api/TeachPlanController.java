@@ -17,7 +17,7 @@ import java.util.List;
  * @projectname: xuecheng0402
  * @description TODO
  **/
-@Api(value = "课程计划编辑接口",tags = "课程计划编辑接口")
+@Api(value = "课程计划编辑接口", tags = "课程计划编辑接口")
 @RestController
 public class TeachPlanController {
 
@@ -34,9 +34,26 @@ public class TeachPlanController {
 
     @ApiOperation("课程计划创建或修改")
     @PostMapping("/teachplan")
-    public void saveTeachplan( @RequestBody SaveTeachplanDto teachplan){
+    public void saveTeachplan(@RequestBody SaveTeachplanDto teachplan) {
         teachplanService.saveTeachplan(teachplan);
     }
 
+    @ApiOperation("课程计划删除")
+    @DeleteMapping("/teachplan/{planId}")
+    public void deleteTeachplan(@PathVariable Long planId) {
+        teachplanService.deleteTeachplan(planId);
+    }
+
+    @ApiOperation("课程计划下移")
+    @PostMapping("/teachplan/movedown/{planId}")
+    public void moveDownTechplan(@PathVariable Long planId) {
+        teachplanService.moveDownTechplan(planId);
+    }
+
+    @ApiOperation("课程计划上移")
+    @PostMapping("/teachplan/moveup/{planId}")
+    public void moveUpTechplan(@PathVariable Long planId) {
+        teachplanService.moveUpTechplan(planId);
+    }
 
 }

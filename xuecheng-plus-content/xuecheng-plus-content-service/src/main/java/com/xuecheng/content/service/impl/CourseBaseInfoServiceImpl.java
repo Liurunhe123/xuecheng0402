@@ -6,16 +6,12 @@ import com.xuecheng.base.exception.RestErrorResponse;
 import com.xuecheng.base.exception.XueChengPlusException;
 import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
-import com.xuecheng.content.mapper.CourseBaseMapper;
-import com.xuecheng.content.mapper.CourseCategoryMapper;
-import com.xuecheng.content.mapper.CourseMarketMapper;
+import com.xuecheng.content.mapper.*;
 import com.xuecheng.content.model.dto.AddCourseDto;
 import com.xuecheng.content.model.dto.CourseBaseInfoDto;
 import com.xuecheng.content.model.dto.EditCourseDto;
 import com.xuecheng.content.model.dto.QueryCourseParamsDto;
-import com.xuecheng.content.model.po.CourseBase;
-import com.xuecheng.content.model.po.CourseCategory;
-import com.xuecheng.content.model.po.CourseMarket;
+import com.xuecheng.content.model.po.*;
 import com.xuecheng.content.service.CourseBaseInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
@@ -26,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -46,6 +43,12 @@ public class CourseBaseInfoServiceImpl implements CourseBaseInfoService {
 
     @Autowired
     CourseCategoryMapper courseCategoryMapper;
+
+    @Autowired
+    TeachplanMapper teachplanMapper;
+
+    @Autowired
+    CourseTeacherMapper courseTeacherMapper;
 
     @Override
     public PageResult<CourseBase> queryCourseBaseList(PageParams pageParams, QueryCourseParamsDto queryCourseParamsDto) {
@@ -148,18 +151,19 @@ public class CourseBaseInfoServiceImpl implements CourseBaseInfoService {
         if (courseBase == null) {
             return null;
         }
-        CourseMarket courseMarket = courseMarketMapper.selectById(courseId);
-        if (courseMarket == null) {
-            return null;
-        }
         CourseBaseInfoDto courseBaseInfoDto = new CourseBaseInfoDto();
         BeanUtils.copyProperties(courseBase, courseBaseInfoDto);
-        BeanUtils.copyProperties(courseMarket, courseBaseInfoDto);
         //查询分类名称
         CourseCategory courseCategory = courseCategoryMapper.selectById(courseBase.getSt());
         courseBaseInfoDto.setStName(courseCategory.getName());
         CourseCategory courseCategoryByMt = courseCategoryMapper.selectById(courseBase.getMt());
         courseBaseInfoDto.setMtName(courseCategoryByMt.getName());
+        CourseMarket courseMarket = courseMarketMapper.selectById(courseId);
+        if (courseMarket == null) {
+            courseBaseInfoDto.setPrice(0f);
+            return courseBaseInfoDto;
+        }
+        BeanUtils.copyProperties(courseMarket, courseBaseInfoDto);
         return courseBaseInfoDto;
     }
 
@@ -192,12 +196,28 @@ public class CourseBaseInfoServiceImpl implements CourseBaseInfoService {
         //更新营销信息
         CourseMarket courseMarket = new CourseMarket();
         BeanUtils.copyProperties(editCourseDto, courseMarket);
-        courseMarketMapper.updateById(courseMarket);
-        //TODO
+        saveCourseMarket(courseMarket);
         //查询课程信息
         CourseBaseInfoDto courseBaseInfo = getCourseBaseInfo(id);
 
         return courseBaseInfo;
+    }
+
+    @Override
+    public void deleteCourseBase(Long id) {
+        CourseBase courseBase = courseBaseMapper.selectById(id);
+        String auditStatus = courseBase.getAuditStatus();
+        if (!auditStatus.equals("202002")) {
+            XueChengPlusException.cast("审核状态为未提交时方可删除");
+        }
+        courseBaseMapper.deleteById(id);
+        courseMarketMapper.deleteById(id);
+        LambdaQueryWrapper<Teachplan> teachplanQueryWrapper = new LambdaQueryWrapper<>();
+        teachplanQueryWrapper = teachplanQueryWrapper.eq(Teachplan::getCourseId, id);
+        teachplanMapper.delete(teachplanQueryWrapper);
+        LambdaQueryWrapper<CourseTeacher> courseTeacherQueryWrapper = new LambdaQueryWrapper<>();
+        courseTeacherQueryWrapper.eq(CourseTeacher::getCourseId, id);
+        courseTeacherMapper.delete(courseTeacherQueryWrapper);
     }
 
 
