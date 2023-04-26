@@ -1,7 +1,6 @@
-
 spring:
   application:
-    name: content-service  #服务名
+    name: system-service
   cloud:
     nacos:
       server-addr: 192.168.101.65:8848
@@ -14,11 +13,10 @@ spring:
     active: dev  #环境名
 #  datasource:
 #    driver-class-name: com.mysql.cj.jdbc.Driver
-#    url: jdbc:mysql://192.168.101.65:3306/xc0402_content?serverTimezone=UTC&userUnicode=true&useSSL=false&
+#    url: jdbc:mysql://192.168.101.65:3306/xc0402_system?serverTimezone=UTC&userUnicode=true&useSSL=false&
 #    username: root
 #    password: mysql
+
 # 日志文件配置路径
 logging:
   config: classpath:log4j2-dev.xml
-
-

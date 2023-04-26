@@ -12,6 +12,7 @@ import com.xuecheng.content.service.TeachplanService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -66,6 +67,7 @@ public class TeachplanServiceImpl implements TeachplanService {
         }
     }
 
+    @Transactional
     @Override
     public void deleteTeachplan(Long planId) {
         Teachplan teachplan = teachplanMapper.selectById(planId);
@@ -93,6 +95,7 @@ public class TeachplanServiceImpl implements TeachplanService {
         }
     }
 
+    @Transactional
     @Override
     public void moveDownTechplan(Long planId) {
         Teachplan teachplan = teachplanMapper.selectById(planId);
@@ -115,6 +118,7 @@ public class TeachplanServiceImpl implements TeachplanService {
         teachplanMapper.updateById(teachplanNext);
     }
 
+    @Transactional
     @Override
     public void moveUpTechplan(Long planId) {
         Teachplan teachplan = teachplanMapper.selectById(planId);
