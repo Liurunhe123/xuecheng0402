@@ -7,3 +7,13 @@ Content-Disposition: form-data; name="filedata"; filename="1.png"
 Content-Type: application/octet-stream
 
 < e:/Desktop/1.png
+
+### 上传视频
+POST {{media_host}}/media/upload/uploadchunk?fileMd5=12345678&chunk=1
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="20230428_134128.mp4"
+Content-Type: application/octet-stream
+
+< C:\Users\86992\Videos\Captures/20230428_134128.mp4

@@ -12,6 +12,8 @@ import org.springframework.http.MediaType;
 import java.io.*;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Mr.M
@@ -71,7 +73,10 @@ public class MinioTest {
     @Test
     public void test_getFile() throws Exception {
 
-        GetObjectArgs getObjectArgs = GetObjectArgs.builder().bucket("testbucket").object("test/01/1.mp4").build();
+        GetObjectArgs getObjectArgs = GetObjectArgs.builder().
+                bucket("testbucket").
+                object("test/01/1.mp4").
+                build();
         //查询远程服务获取到一个流对象
         FilterInputStream inputStream = minioClient.getObject(getObjectArgs);
         //指定输出流
@@ -90,9 +95,58 @@ public class MinioTest {
     }
 
 
+    //将分块文件上传到minio
+    @Test
+    public void uoloadChunk() throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        for (int i = 0; i < 3; i++) {
+            //上传文件的参数信息
+            UploadObjectArgs uploadObjectArgs = UploadObjectArgs.builder()
+                    .bucket("testbucket")//桶
+                    .filename("C:\\Users\\86992\\Videos\\Captures\\chunk\\"+i) //指定本地文件路径
+                    .object("chunk/"+i)//对象名 放在子目录下
+                    .build();
+
+            //上传文件
+            minioClient.uploadObject(uploadObjectArgs);
+            System.out.println("上传分块"+i+"成功");
+        }
+    }
+
+    //调用minio接口合并分块
+    @Test
+    public void testMerge() throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        List<ComposeSource> sources = new ArrayList<>();
+
+        for (int i = 0; i < 3; i++) {
+            ComposeSource composeSource = ComposeSource.builder()
+                    .bucket("testbucket")
+                    .object("chunk/" + i)
+                    .build();
+            sources.add(composeSource);
+
+        }
+
+        //指定合并后的objectName等信息
+        ComposeObjectArgs composeObjectArgs = ComposeObjectArgs.builder()
+                .bucket("testbucket")
+                .object("merge01.mp4")
+                .sources(sources)
+                .build();
+        //合并文件
+        minioClient.composeObject(composeObjectArgs);
+    }
+
+    //批量清理分块文件
 
 
 
+    @Test
+    public void testRemoveFile() throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        RemoveObjectArgs removeObjectArgs = RemoveObjectArgs.builder()
+                .bucket("video")
+                .object("e/a/eaadda922a84eb1990b838c32676325c/eaadda922a84eb1990b838c32676325c.avi").build();
+        minioClient.removeObject(removeObjectArgs);
+    }
 
 
 
