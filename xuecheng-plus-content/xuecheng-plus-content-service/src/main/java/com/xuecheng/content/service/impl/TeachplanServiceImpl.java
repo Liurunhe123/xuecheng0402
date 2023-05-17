@@ -15,15 +15,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * @author: Ricky
- * @date: 2023/4/21
- * @projectname: xuecheng0402
+ * @author Mr.M
+ * @version 1.0
  * @description TODO
- **/
+ * @date 2023/2/14 12:11
+ */
 @Service
 public class TeachplanServiceImpl implements TeachplanService {
 
@@ -34,144 +33,61 @@ public class TeachplanServiceImpl implements TeachplanService {
     TeachplanMediaMapper teachplanMediaMapper;
 
     @Override
-    public List<TeachplanDto> findTeachPlanTree(Long courseId) {
+    public List<TeachplanDto> findTeachplanTree(Long courseId) {
         List<TeachplanDto> teachplanDtos = teachplanMapper.selectTreeNodes(courseId);
         return teachplanDtos;
     }
 
-    private int getTeachplanCount(Long parentid,Long courseId) {
-        //确定排序字段，找到它的同级结点个数，排序字段就是个数加1
+    private int getTeachplanCount(Long courseId,Long parentId){
         LambdaQueryWrapper<Teachplan> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper = queryWrapper.eq(Teachplan::getParentid, parentid).eq(Teachplan::getCourseId, courseId);
+        queryWrapper = queryWrapper.eq(Teachplan::getCourseId, courseId).eq(Teachplan::getParentid, parentId);
         Integer count = teachplanMapper.selectCount(queryWrapper);
-        return count+1;
+        return  count+1;
     }
-
     @Override
     public void saveTeachplan(SaveTeachplanDto saveTeachplanDto) {
+        //通过课程计划id判断是新增和修改
         Long teachplanId = saveTeachplanDto.getId();
-        if (teachplanId == null) {
-            // 新增
+        if(teachplanId ==null){
+            //新增
             Teachplan teachplan = new Teachplan();
-            BeanUtils.copyProperties(saveTeachplanDto, teachplan);
+            BeanUtils.copyProperties(saveTeachplanDto,teachplan);
+            //确定排序字段，找到它的同级节点个数，排序字段就是个数加1  select count(1) from teachplan where course_id=117 and parentid=268
             Long parentid = saveTeachplanDto.getParentid();
             Long courseId = saveTeachplanDto.getCourseId();
-            //确定排序字段，找到它的同级结点个数，排序字段就是个数加1
-            int teachplanCount = getTeachplanCount(parentid, courseId);
+            int teachplanCount = getTeachplanCount(courseId, parentid);
             teachplan.setOrderby(teachplanCount);
             teachplanMapper.insert(teachplan);
-        } else {
-            // 修改
+
+        }else{
+            //修改
             Teachplan teachplan = teachplanMapper.selectById(teachplanId);
-            // 将参数复制到teachplan
-            BeanUtils.copyProperties(saveTeachplanDto, teachplan);
+            //将参数复制到teachplan
+            BeanUtils.copyProperties(saveTeachplanDto,teachplan);
             teachplanMapper.updateById(teachplan);
         }
+
     }
 
     @Transactional
     @Override
-    public void deleteTeachplan(Long planId) {
-        Teachplan teachplan = teachplanMapper.selectById(planId);
-        //查询章节级别
-        Integer grade = teachplan.getGrade();
-        if (grade == 1) {
-            //大章节
-            LambdaQueryWrapper<Teachplan> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper = queryWrapper.eq(Teachplan::getParentid, planId);
-            Integer count = teachplanMapper.selectCount(queryWrapper);
-            //大章节信息还有子集信息
-            if (count > 0) {
-                XueChengPlusException.cast("课程计划信息还有子级信息，无法操作");
-            }
-            teachplanMapper.deleteById(planId);
-        } else {
-            //小章节
-            LambdaQueryWrapper<TeachplanMedia> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper = queryWrapper.eq(TeachplanMedia::getTeachplanId, planId);
-            TeachplanMedia teachplanMedia = teachplanMediaMapper.selectOne(queryWrapper);
-            if (teachplanMedia != null) {
-                teachplanMediaMapper.deleteById(teachplanMedia.getId());
-            }
-            teachplanMapper.deleteById(planId);
-        }
-    }
-
-    @Transactional
-    @Override
-    public void moveDownTechplan(Long planId) {
-        Teachplan teachplan = teachplanMapper.selectById(planId);
-        //找到父节点id
-        Long parentid = teachplan.getParentid();
-        //课程id
-        Long courseId = teachplan.getCourseId();
-        //当前计划顺序
-        Integer orderby = teachplan.getOrderby();
-        LambdaQueryWrapper<Teachplan> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper = queryWrapper.eq(Teachplan::getParentid, parentid).eq(Teachplan::getCourseId, courseId).eq(Teachplan::getOrderby, orderby + 1);
-        //后一条计划
-        Teachplan teachplanNext = teachplanMapper.selectOne(queryWrapper);
-        if (teachplanNext == null) {
-            return;
-        }
-        teachplan.setOrderby(orderby + 1);
-        teachplanNext.setOrderby(orderby);
-        teachplanMapper.updateById(teachplan);
-        teachplanMapper.updateById(teachplanNext);
-    }
-
-    @Transactional
-    @Override
-    public void moveUpTechplan(Long planId) {
-        Teachplan teachplan = teachplanMapper.selectById(planId);
-        //当前计划顺序
-        Integer orderby = teachplan.getOrderby();
-        //父节点
-        Long parentid = teachplan.getParentid();
-        //课程id
-        Long courseId = teachplan.getCourseId();
-        LambdaQueryWrapper<Teachplan> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper = queryWrapper.eq(Teachplan::getParentid, parentid).eq(Teachplan::getCourseId, courseId).eq(Teachplan::getOrderby, orderby - 1);
-        //前一条计划
-        Teachplan teachplanBefore = teachplanMapper.selectOne(queryWrapper);
-        if (teachplanBefore == null) {
-            return;
-        }
-        teachplanBefore.setOrderby(orderby);
-        teachplan.setOrderby(orderby - 1);
-        teachplanMapper.updateById(teachplan);
-        teachplanMapper.updateById(teachplanBefore);
-    }
-
-
-    @Transactional
-    @Override
-    public TeachplanMedia associationMedia(BindTeachplanMediaDto bindTeachplanMediaDto) {
-        //教学计划id
+    public void associationMedia(BindTeachplanMediaDto bindTeachplanMediaDto) {
+        //课程计划id
         Long teachplanId = bindTeachplanMediaDto.getTeachplanId();
         Teachplan teachplan = teachplanMapper.selectById(teachplanId);
-        if(teachplan==null){
-            XueChengPlusException.cast("教学计划不存在");
+        if(teachplan == null){
+            XueChengPlusException.cast("课程计划不存在");
         }
-        Integer grade = teachplan.getGrade();
-        if(grade!=2){
-            XueChengPlusException.cast("只允许第二级教学计划绑定媒资文件");
-        }
-        //课程id
-        Long courseId = teachplan.getCourseId();
 
-        //先删除原来该教学计划绑定的媒资
-        teachplanMediaMapper.delete(new LambdaQueryWrapper<TeachplanMedia>().eq(TeachplanMedia::getTeachplanId,teachplanId));
+        //先删除原有记录,根据课程计划id删除它所绑定的媒资
+        int delete = teachplanMediaMapper.delete(new LambdaQueryWrapper<TeachplanMedia>().eq(TeachplanMedia::getTeachplanId, bindTeachplanMediaDto.getTeachplanId()));
 
-        //再添加教学计划与媒资的绑定关系
+        //再添加新记录
         TeachplanMedia teachplanMedia = new TeachplanMedia();
-        teachplanMedia.setCourseId(courseId);
-        teachplanMedia.setTeachplanId(teachplanId);
+        BeanUtils.copyProperties(bindTeachplanMediaDto,teachplanMedia);
+        teachplanMedia.setCourseId(teachplan.getCourseId());
         teachplanMedia.setMediaFilename(bindTeachplanMediaDto.getFileName());
-        teachplanMedia.setMediaId(bindTeachplanMediaDto.getMediaId());
-        teachplanMedia.setCreateDate(LocalDateTime.now());
         teachplanMediaMapper.insert(teachplanMedia);
-        return teachplanMedia;
-    }
 
+    }
 }

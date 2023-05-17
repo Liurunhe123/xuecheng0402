@@ -23,4 +23,5 @@
         id, code, p_id, menu_name, url, is_menu, level, sort, status, icon, create_time, update_time
     </sql>
 
+
 </mapper>

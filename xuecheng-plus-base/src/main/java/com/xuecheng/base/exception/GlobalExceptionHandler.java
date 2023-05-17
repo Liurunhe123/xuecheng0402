@@ -37,6 +37,8 @@ public class GlobalExceptionHandler {
         return restErrorResponse;
     }
 
+
+
     @ResponseBody
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -44,7 +46,9 @@ public class GlobalExceptionHandler {
 
         //记录异常
         log.error("系统异常{}",e.getMessage(),e);
-
+        if (e.getMessage().equals("Access is denied")) {
+            return new RestErrorResponse("您没有权限操作此功能");
+        }
 
         //解析出异常信息
         String message = e.getMessage();

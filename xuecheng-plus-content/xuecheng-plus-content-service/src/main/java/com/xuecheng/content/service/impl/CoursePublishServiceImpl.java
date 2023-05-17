@@ -35,21 +35,19 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
- * @author: Ricky
- * @date: 2023/5/6
- * @projectname: xuecheng0402
- * @description TODO
- **/
-@Service
+ * @author Mr.M
+ * @version 1.0
+ * @description 课程发布相关接口实现
+ * @date 2023/2/21 10:04
+ */
 @Slf4j
+@Service
 public class CoursePublishServiceImpl implements CoursePublishService {
 
     @Autowired
@@ -61,34 +59,31 @@ public class CoursePublishServiceImpl implements CoursePublishService {
     @Autowired
     CourseBaseMapper courseBaseMapper;
 
-    @Autowired
+     @Autowired
     CourseMarketMapper courseMarketMapper;
 
-    @Autowired
+     @Autowired
     CoursePublishPreMapper coursePublishPreMapper;
+     @Autowired
+     CoursePublishMapper coursePublishMapper;
 
-    @Autowired
-    CoursePublishMapper coursePublishMapper;
-
-    @Autowired
+     @Autowired
     MqMessageService mqMessageService;
+     @Autowired
+     MediaServiceClient mediaServiceClient;
 
-    @Autowired
-    MediaServiceClient mediaServiceClient;
 
 
     @Override
     public CoursePreviewDto getCoursePreviewInfo(Long courseId) {
-
-        //课程基本信息、营销信息
-        CourseBaseInfoDto courseBaseInfo = courseBaseInfoService.getCourseBaseInfo(courseId);
-
-        //课程计划信息
-        List<TeachplanDto> teachplanTree= teachplanService.findTeachPlanTree(courseId);
-
         CoursePreviewDto coursePreviewDto = new CoursePreviewDto();
+        //课程基本信息,营销信息
+        CourseBaseInfoDto courseBaseInfo = courseBaseInfoService.getCourseBaseInfo(courseId);
         coursePreviewDto.setCourseBase(courseBaseInfo);
+        //课程计划信息
+        List<TeachplanDto> teachplanTree = teachplanService.findTeachplanTree(courseId);
         coursePreviewDto.setTeachplans(teachplanTree);
+
         return coursePreviewDto;
     }
 
@@ -96,70 +91,72 @@ public class CoursePublishServiceImpl implements CoursePublishService {
     @Override
     public void commitAudit(Long companyId, Long courseId) {
 
-        //约束校验
-        CourseBase courseBase = courseBaseMapper.selectById(courseId);
-        //课程审核状态
-        String auditStatus = courseBase.getAuditStatus();
-        //当前审核状态为已提交不允许再次提交
-        if("202003".equals(auditStatus)){
-            XueChengPlusException.cast("当前为等待审核状态，审核完成可以再次提交。");
-        }
-        //本机构只允许提交本机构的课程
-        if(!courseBase.getCompanyId().equals(companyId)){
-            XueChengPlusException.cast("不允许提交其它机构的课程。");
-        }
-
-        //课程图片是否填写
-        if(StringUtils.isEmpty(courseBase.getPic())){
-            XueChengPlusException.cast("提交失败，请上传课程图片");
-        }
-
-        //添加课程预发布记录
-        CoursePublishPre coursePublishPre = new CoursePublishPre();
-        //课程基本信息加部分营销信息
         CourseBaseInfoDto courseBaseInfo = courseBaseInfoService.getCourseBaseInfo(courseId);
-        BeanUtils.copyProperties(courseBaseInfo,coursePublishPre);
-        //课程营销信息
-        CourseMarket courseMarket = courseMarketMapper.selectById(courseId);
-        //转为json
-        String courseMarketJson = JSON.toJSONString(courseMarket);
-        //将课程营销信息json数据放入课程预发布表
-        coursePublishPre.setMarket(courseMarketJson);
-
-        //查询课程计划信息
-        List<TeachplanDto> teachplanTree = teachplanService.findTeachPlanTree(courseId);
-        if(teachplanTree.size()<=0){
-            XueChengPlusException.cast("提交失败，还没有添加课程计划");
+        if (courseBaseInfo == null) {
+            XueChengPlusException.cast("课程找不到");
         }
-        //转json
-        String teachplanTreeString = JSON.toJSONString(teachplanTree);
-        coursePublishPre.setTeachplan(teachplanTreeString);
+        //审核状态
+        String auditStatus = courseBaseInfo.getAuditStatus();
 
-        //设置预发布记录状态,已提交
-        coursePublishPre.setStatus("202003");
-        //教学机构id
-        coursePublishPre.setCompanyId(companyId);
+        //如果课程的审核状态为已提交则不允许提交
+        if(auditStatus.equals("202003")){
+            XueChengPlusException.cast("课程已提交请等待审核");
+        }
+        //本机构只能提交本机构的课程
         //todo:本机构只能提交本机构的课程
 
+        //课程的图片、计划信息没有填写也不允许提交
+        String pic = courseBaseInfo.getPic();
+        if(StringUtils.isEmpty(pic)){
+            XueChengPlusException.cast("请求上传课程图片");
+        }
+        //查询课程计划
+        //课程计划信息
+        List<TeachplanDto> teachplanTree = teachplanService.findTeachplanTree(courseId);
+        if(teachplanTree == null || teachplanTree.size()==0){
+            XueChengPlusException.cast("请编写课程计划");
+        }
+
+        //查询到课程基本信息、营销信息、计划等信息插入到课程预发布表
+        CoursePublishPre coursePublishPre = new CoursePublishPre();
+        BeanUtils.copyProperties(courseBaseInfo,coursePublishPre);
+        //设置机构id
+        coursePublishPre.setCompanyId(companyId);
+        //营销信息
+        CourseMarket courseMarket = courseMarketMapper.selectById(courseId);
+        //转json
+        String courseMarketJson = JSON.toJSONString(courseMarket);
+        coursePublishPre.setMarket(courseMarketJson);
+        //计划信息
+        //转json
+        String teachplanTreeJson = JSON.toJSONString(teachplanTree);
+        coursePublishPre.setTeachplan(teachplanTreeJson);
+        //状态为已提交
+        coursePublishPre.setStatus("202003");
         //提交时间
         coursePublishPre.setCreateDate(LocalDateTime.now());
-        CoursePublishPre coursePublishPreUpdate = coursePublishPreMapper.selectById(courseId);
-        if(coursePublishPreUpdate == null){
-            //添加课程预发布记录
+        //查询预发布表，如果有记录则更新，没有则插入
+        CoursePublishPre coursePublishPreObj = coursePublishPreMapper.selectById(courseId);
+        if(coursePublishPreObj==null){
+            //插入
             coursePublishPreMapper.insert(coursePublishPre);
-        }else{
+        }else {
+            //更新
             coursePublishPreMapper.updateById(coursePublishPre);
         }
 
-        //更新课程基本表的审核状态
-        courseBase.setAuditStatus("202003");
+        //更新课程基本信息表的审核状态为已提交
+        CourseBase courseBase = courseBaseMapper.selectById(courseId);
+        courseBase.setAuditStatus("202003");//审核状态为已提交
+
         courseBaseMapper.updateById(courseBase);
     }
 
     @Transactional
     @Override
     public void publish(Long companyId, Long courseId) {
-//查询预发布表
+
+        //查询预发布表
         CoursePublishPre coursePublishPre = coursePublishPreMapper.selectById(courseId);
         if(coursePublishPre == null){
             XueChengPlusException.cast("课程没有审核记录，无法发布");
@@ -193,45 +190,37 @@ public class CoursePublishServiceImpl implements CoursePublishService {
 
     @Override
     public File generateCourseHtml(Long courseId) {
-        //静态化文件
-        File htmlFile  = null;
 
+        Configuration configuration = new Configuration(Configuration.getVersion());
+        //最终的静态文件
+        File htmlFile = null;
         try {
-            //配置freemarker
-            Configuration configuration = new Configuration(Configuration.getVersion());
-
-            //加载模板
-            //选指定模板路径,classpath下templates下
-            //得到classpath路径
+            //拿到classpath路径
             String classpath = this.getClass().getResource("/").getPath();
-            configuration.setDirectoryForTemplateLoading(new File(classpath + "/templates/"));
-            //设置字符编码
+            //指定模板的目录
+            configuration.setDirectoryForTemplateLoading(new File(classpath+"/templates/"));
+            //指定编码
             configuration.setDefaultEncoding("utf-8");
 
-            //指定模板文件名称
+            //得到模板
             Template template = configuration.getTemplate("course_template.ftl");
-
             //准备数据
             CoursePreviewDto coursePreviewInfo = this.getCoursePreviewInfo(courseId);
+            HashMap<String, Object> map = new HashMap<>();
+            map.put("model",coursePreviewInfo);
 
-            Map<String, Object> map = new HashMap<>();
-            map.put("model", coursePreviewInfo);
-
-            //静态化
-            //参数1：模板，参数2：数据模型
-            String content = FreeMarkerTemplateUtils.processTemplateIntoString(template, map);
-//            System.out.println(content);
-            //将静态化内容输出到文件中
-            InputStream inputStream = IOUtils.toInputStream(content);
-            //创建静态化文件
-            htmlFile = File.createTempFile("course",".html");
-            log.debug("课程静态化，生成静态文件:{}",htmlFile.getAbsolutePath());
-            //输出流
+            //Template template 模板, Object model 数据
+            String html = FreeMarkerTemplateUtils.processTemplateIntoString(template, map);
+            //输入流
+            InputStream inputStream = IOUtils.toInputStream(html, "utf-8");
+            htmlFile = File.createTempFile("coursepublish",".html");
+            //输出文件
             FileOutputStream outputStream = new FileOutputStream(htmlFile);
-            IOUtils.copy(inputStream, outputStream);
-        } catch (Exception e) {
-            log.error("课程静态化异常:{}",e.toString());
-            XueChengPlusException.cast("课程静态化异常");
+            //使用流将html写入文件
+            IOUtils.copy(inputStream,outputStream);
+        }catch (Exception ex){
+            log.error("页面静态化出现问题,课程id:{}",courseId,ex);
+            ex.printStackTrace();
         }
 
         return htmlFile;
@@ -268,6 +257,16 @@ public class CoursePublishServiceImpl implements CoursePublishService {
             XueChengPlusException.cast(CommonError.UNKOWN_ERROR);
         }
 
+    }
+
+    /**
+     * 根据课程 id查询课程发布信息
+     * @param courseId
+     * @return
+     */
+    public CoursePublish getCoursePublish(Long courseId){
+        CoursePublish coursePublish = coursePublishMapper.selectById(courseId);
+        return coursePublish ;
     }
 
 }

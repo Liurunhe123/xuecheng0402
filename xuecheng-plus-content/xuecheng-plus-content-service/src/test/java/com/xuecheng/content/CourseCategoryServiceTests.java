@@ -14,11 +14,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.util.List;
 
 /**
- * @author: Ricky
- * @date: 2023/4/9
- * @projectname: xuecheng0402
+ * @author Mr.M
+ * @version 1.0
  * @description TODO
- **/
+ * @date 2023/2/12 9:24
+ */
 @SpringBootTest
 public class CourseCategoryServiceTests {
 
@@ -26,9 +26,10 @@ public class CourseCategoryServiceTests {
     CourseCategoryService courseCategoryService;
 
     @Test
-    public void testcourseCategoryService() {
+    public void testCourseCategoryService() {
+
         List<CourseCategoryTreeDto> courseCategoryTreeDtos = courseCategoryService.queryTreeNodes("1");
         System.out.println(courseCategoryTreeDtos);
-    }
 
+    }
 }

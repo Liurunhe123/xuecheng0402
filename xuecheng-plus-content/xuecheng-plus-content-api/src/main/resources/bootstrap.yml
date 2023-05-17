@@ -1,19 +1,19 @@
 #server:
 #  servlet:
 #    context-path: /content
-#  port: 63040
+#  port: 63041
 #微服务配置
 spring:
   application:
-    name: content-api #服务名
+    name: content-api #服务名content-api-dev.yaml
   cloud:
     nacos:
       server-addr: 192.168.101.65:8848
       discovery: #服务注册相关配置
-        namespace: dev0402
+        namespace: dev402
         group: xuecheng-plus-project
-      config:
-        namespace: dev0402
+      config: #配置文件相关配置
+        namespace: dev402
         group: xuecheng-plus-project
         file-extension: yaml
         refresh-enabled: true
@@ -31,19 +31,23 @@ spring:
           - data-id: freemarker-config-dev.yaml
             group: xuecheng-plus-common
             refresh: true
+          - data-id: feign-${spring.profiles.active}.yaml
+            group: xuecheng-plus-common
+            refresh: true  #profiles默认为dev
 
 
-  #  datasource:
+#  datasource:
 #    driver-class-name: com.mysql.cj.jdbc.Driver
-#    url: jdbc:mysql://192.168.101.65:3306/xc0402_content?serverTimezone=UTC&userUnicode=true&useSSL=false&
+#    url: jdbc:mysql://192.168.101.65:3306/xc402_content?serverTimezone=UTC&userUnicode=true&useSSL=false&
 #    username: root
 #    password: mysql
 
   profiles:
-    active: dev #环境名
-# 日志文件配置路径
+    active: dev   #环境名
+
 #logging:
-#  config: classpath:log4j2-dev.xml
+#  config: classpath:log4j2-dev.xml  # 日志文件配置路径
+
 
 #swagger:
 #  title: "学成在线内容管理系统"

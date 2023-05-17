@@ -1,16 +1,14 @@
 package com.xuecheng.content.model.dto;
 
 import lombok.Data;
-import lombok.ToString;
 
 /**
- * @author: Ricky
- * @date: 2023/4/22
- * @projectname: xuecheng0402
- * @description TODO
- **/
+ * @author Mr.M
+ * @version 1.0
+ * @description 新增大章节、小章节、修改章节信息
+ * @date 2023/2/14 14:54
+ */
 @Data
-@ToString
 public class SaveTeachplanDto {
 
     /***
@@ -54,7 +52,4 @@ public class SaveTeachplanDto {
      * 是否支持试学或预览（试看）
      */
     private String isPreview;
-
-
-
 }

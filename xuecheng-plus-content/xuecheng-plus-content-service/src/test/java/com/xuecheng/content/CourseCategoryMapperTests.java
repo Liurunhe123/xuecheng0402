@@ -9,7 +9,7 @@ import com.xuecheng.content.mapper.CourseCategoryMapper;
 import com.xuecheng.content.model.dto.CourseCategoryTreeDto;
 import com.xuecheng.content.model.dto.QueryCourseParamsDto;
 import com.xuecheng.content.model.po.CourseBase;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,11 +18,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.util.List;
 
 /**
- * @author: Ricky
- * @date: 2023/4/9
- * @projectname: xuecheng0402
+ * @author Mr.M
+ * @version 1.0
  * @description TODO
- **/
+ * @date 2023/2/12 9:24
+ */
 @SpringBootTest
 public class CourseCategoryMapperTests {
 
@@ -33,7 +33,5 @@ public class CourseCategoryMapperTests {
     public void testCourseCategoryMapper() {
         List<CourseCategoryTreeDto> courseCategoryTreeDtos = courseCategoryMapper.selectTreeNodes("1");
         System.out.println(courseCategoryTreeDtos);
-
     }
-
 }

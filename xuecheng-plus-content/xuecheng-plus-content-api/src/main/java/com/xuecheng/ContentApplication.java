@@ -6,11 +6,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 
 /**
- * @author: Ricky
- * @date: 2023/4/7
- * @projectname: xuecheng0402
+ * @author Mr.M
+ * @version 1.0
  * @description 内容管理服务启动类
- **/
+ * @date 2023/2/11 15:49
+ */
 @EnableFeignClients(basePackages={"com.xuecheng.content.feignclient"})
 @EnableSwagger2Doc
 @SpringBootApplication

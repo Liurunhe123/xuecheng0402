@@ -7,7 +7,7 @@ import java.util.List;
 
 public class Mp4VideoUtil extends VideoUtil {
 
-    String ffmpeg_path = "D:\\software\\ffmpeg.exe";//ffmpeg的安装位置
+    String ffmpeg_path = "D:\\Program Files\\ffmpeg-20180227-fa0c9d6-win64-static\\bin\\ffmpeg.exe";//ffmpeg的安装位置
     String video_path = "D:\\BaiduNetdiskDownload\\test1.avi";
     String mp4_name = "test1.mp4";
     String mp4folder_path = "D:/BaiduNetdiskDownload/Movies/test1/";
@@ -82,14 +82,21 @@ public class Mp4VideoUtil extends VideoUtil {
     }
 
     public static void main(String[] args) throws IOException {
+
+//        ProcessBuilder builder = new ProcessBuilder();
+//        builder.command("D:\\Program Files\\EditPlus\\EditPlus.exe");
+//        //将标准输入流和错误输入流合并，通过标准输入流程读取信息
+//        builder.redirectErrorStream(true);
+//        Process p = builder.start();
+
         //ffmpeg的路径
-        String ffmpeg_path = "D:\\software\\ffmpeg.exe";//ffmpeg的安装位置
+        String ffmpeg_path = "D:\\soft\\ffmpeg\\ffmpeg.exe";//ffmpeg的安装位置
         //源avi视频的路径
-        String video_path = "C:\\Users\\86992\\Videos\\Captures\\20230428_134128.avi";
+        String video_path = "D:\\develop\\upload\\02-概述-分库分表是什么.avi";
         //转换后mp4文件的名称
-        String mp4_name = "1.mp4";
+        String mp4_name = "02-概述-分库分表是什么.mp4";
         //转换后mp4文件的路径
-        String mp4_path = "D:\\1.mp4";
+        String mp4_path = "D:\\develop\\upload\\02-概述-分库分表是什么.mp4";
         //创建工具类对象
         Mp4VideoUtil videoUtil = new Mp4VideoUtil(ffmpeg_path,video_path,mp4_name,mp4_path);
         //开始视频转换，成功将返回success

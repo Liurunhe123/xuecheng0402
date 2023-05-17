@@ -8,24 +8,25 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 /**
- * @author: Ricky
- * @date: 2023/5/8
- * @projectname: xuecheng0402
+ * @author Mr.M
+ * @version 1.0
  * @description TODO
- **/
+ * @date 2023/2/22 11:09
+ */
 @Slf4j
 @Component
 public class MediaServiceClientFallbackFactory implements FallbackFactory<MediaServiceClient> {
-    @Override
-    public MediaServiceClient create(Throwable cause) {
-        return new MediaServiceClient() {
-            @Override
-            public String upload(MultipartFile filedata, String objectName) throws IOException {
-                //降级方法
-                log.debug("调用媒资管理服务上传文件时发生熔断，异常信息:{}", cause.toString(), cause);
-                return null;
+ //拿到了熔断的异常信息throwable
+ @Override
+ public MediaServiceClient create(Throwable throwable) {
 
-            }
-        };
-    }
+  return new MediaServiceClient() {
+   //发生熔断上传服务调用此方法执行降级逻辑
+   @Override
+   public String upload(MultipartFile filedata, String objectName) throws IOException {
+     log.debug("远程调用上传文件的接口发生熔断:{}",throwable.toString(),throwable);
+    return null;
+   }
+  };
+ }
 }

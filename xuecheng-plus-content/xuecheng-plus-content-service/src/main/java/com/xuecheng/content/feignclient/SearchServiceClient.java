@@ -5,15 +5,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 /**
- * @author: Ricky
- * @date: 2023/5/9
- * @projectname: xuecheng0402
+ * @author Mr.M
+ * @version 1.0
  * @description TODO
- **/
+ * @date 2023/2/22 14:47
+ */
 @FeignClient(value = "search",fallbackFactory = SearchServiceClientFallbackFactory.class)
 public interface SearchServiceClient {
 
-    @PostMapping("/search/index/course")
-    public Boolean add(@RequestBody CourseIndex courseIndex);
-
+ @PostMapping("/search/index/course")
+ public Boolean add(@RequestBody CourseIndex courseIndex);
 }
